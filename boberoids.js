@@ -17,6 +17,7 @@ $(function() {
         startTicks,
         lastGeneration,
         laserBeam,
+        score = 0,
         gameOn = true,
         explosion,
         pop,
@@ -78,7 +79,7 @@ $(function() {
     function fire() {
       var facingX = Math.cos(playerState.rotationAngle);
       var facingY = Math.sin(playerState.rotationAngle);
-     
+
       bullets.push({x: 400, y: 300, rotationAngle: playerState.rotationAngle, facingX: facingX, facingY: facingY});
       laserBeam.play();
     };
@@ -117,7 +118,7 @@ $(function() {
       if ((currentTime - lastGeneration) > SPAWN_RATE) {
         generateSpider();
         lastGeneration = currentTime;
-      } 
+      }
     };
 
     function generateSpider() {
@@ -137,7 +138,7 @@ $(function() {
       var directionVector = {x: 400 - x, y: 300 - y };
       var directionLength = Math.sqrt(directionVector.x * directionVector.x + directionVector.y * directionVector.y);
       var normalizedDirectionVector = {x: directionVector.x / directionLength, y: directionVector.y / directionLength};
-  
+
       spiders.push({x: x, y: y, directionVector: normalizedDirectionVector});
     };
 
@@ -159,13 +160,22 @@ $(function() {
         _(bullets).each(function(bullet) {
           var bulletRectangle = {left: bullet.x, top: bullet.y, right: bullet.x + 23, bottom: bullet.y + 7};
           if (rectanglesIntersect(spiderRectangle, bulletRectangle)) {
-            spiders = _(spiders).difference([spider]);
+            killSpider(spider);
             bullets = _(bullets).difference([bullet]);
-            pop.play();
             return;
           }
         });
       });
+    };
+
+    function killSpider(spider) {
+      updateScore(10);
+      spiders = _(spiders).difference([spider]);
+      pop.play();
+    };
+
+    function updateScore(points) {
+      score += points;
     };
 
     function checkCollisionsWithSpidersAndPlayer() {
@@ -229,13 +239,21 @@ $(function() {
         context.restore();
       });
 
+      drawScore();
+
       if (gameOn === false) {
         context.fillStyle = "#FF0000";
         context.font = "bold 60px sans-serif";
-        context.fillText("Game Over", 200, 200); 
+        context.fillText("Game Over", 200, 200);
         context.font = "bold 24px sans-serif";
         context.fillText("Can't kill bugs eh?  I guess you'd rather work for Obtiva.", 100, 270);
       }
+    };
+
+    function drawScore() {
+      context.fillStyle = "#FF0000";
+      context.font = "bold 18px sans-serif";
+      context.fillText("Score: " + score, 10, 20);
     };
 
     function keyup(e) {
@@ -281,12 +299,12 @@ $(function() {
       $(document.documentElement).bind("keyup", function(e) {
         keyup(e);
       });
-      
+
       $(document.documentElement).bind("keypress", function(e) {
         keypress(e);
       });
     };
-    
+
     function getContext() {
       var canvas = $("#boberoids");
       context = canvas[0].getContext("2d");
@@ -298,7 +316,7 @@ $(function() {
         backgroundMusic.get(0).pause();
       }
     };
-   
+
     return {
       start: start,
       stop: stop
